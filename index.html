@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDFing Home</title>
+  <style>
+    :root {
+      --green: #0f4d3a;
+      --white: #ffffff;
+      --muted: #cfe6db;
+      --bg: #062b22;
+      --radius: 12px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, var(--bg), #04251f 80%);
+      color: var(--white);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Logo */
+    header {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .logo {
+      max-width: 180px;
+      margin-bottom: 20px;
+    }
+
+    /* Grid Layout */
+    .card-container {
+      display: grid;
+      grid-template-columns: repeat(2, 160px);
+      gap: 20px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    /* Cards */
+    .card {
+      width: 160px;
+      height: 160px;
+      background: linear-gradient(180deg, rgba(15, 77, 58, 0.95), rgba(10, 50, 40, 0.95));
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s ease, background 0.2s ease;
+      text-align: center;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      background: rgba(15, 77, 58, 1);
+    }
+
+    /* Keep 2x2x2 on Mobile too */
+    @media (max-width: 600px) {
+      .card-container {
+        grid-template-columns: repeat(2, 130px);
+        gap: 15px;
+      }
+
+      .card {
+        width: 130px;
+        height: 130px;
+        font-size: 14px;
+      }
+    }
+
+    footer {
+      margin-top: 40px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="PDFing-logo.png" alt="PDFing Logo" class="logo">
+    <p>All your PDF tools in one place</p>
+  </header>
+
+  <main>
+    <section class="card-container">
+      <a href="pdf-merge.html" class="card">Merge PDF</a>
+      <a href="images-to-pdf.html" class="card">Images to PDF</a>
+      <a href="pdf-to-images.html" class="card">PDF to Images</a>
+      <a href="jpg-to-png.html" class="card">JPG to PNG</a>
+      <a href="png-to-pdf.html" class="card">PNG to PDF</a>
+      <a href="jpg-to-pdf.html" class="card">JPG to PDF</a>
+    </section>
+  </main>
+
+  <footer>
+    All processing happens in your browser. No files are uploaded. <br> <br>Developed and maintained by Ruben Leonard Fernandes 
+  </footer>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDF to Images — Minimal</title>
+  <style>
+    :root{
+      --green:#0f4d3a;
+      --white:#ffffff;
+      --muted: #cfe6db;
+      --bg: #062b22;
+      --radius:12px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    html,body{height:100%;margin:0}
+    body{
+      background: linear-gradient(180deg,var(--bg), #04251f 80%);
+      color:var(--white);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+    }
+    .card{
+      width:100%;
+      max-width:820px;
+      background: linear-gradient(180deg, rgba(15,77,58,0.95), rgba(10,50,40,0.95));
+      border-radius:var(--radius);
+      box-shadow: 0 10px 30px rgba(3,18,14,0.6);
+      padding:28px;
+      box-sizing:border-box;
+    }
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    .logo{
+      width:54px;height:54px;border-radius:10px;background:var(--white);
+      display:flex;align-items:center;justify-content:center;
+      color:var(--green);font-weight:700;font-size:20px
+    }
+    h1{font-size:20px;margin:0}
+    p.lead{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .drop{
+      margin-top:18px;
+      border:2px dashed rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:10px;padding:18px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+    }
+    .drop .left{display:flex;gap:12px;align-items:center}
+    .drop .hint{font-size:13px;color:var(--muted)}
+    .btn{
+      background:var(--white);
+      color:var(--green);
+      border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      text-decoration:none;
+      display:inline-block;
+    }
+    .btn:hover{background:#f0f0f0}
+    input[type=file]{display:none}
+    ul.file-list{list-style:none;padding:0;margin:14px 0 0;max-height:240px;overflow:auto}
+    ul.file-list li{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:8px}
+    .fname{font-size:14px}
+    .fsize{font-size:12px;color:var(--muted)}
+    .actions{display:flex;gap:12px;margin-top:16px}
+    .progress{height:8px;background:rgba(255,255,255,0.04);border-radius:8px;overflow:hidden}
+    .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--white),rgba(255,255,255,0.7));}
+    footer{margin-top:18px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+    .img-wrapper{margin-bottom:20px;text-align:center}
+    .img-wrapper img{max-width:100%;margin-bottom:6px;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,0.4)}
+    @media (max-width:520px){.card{padding:16px}.logo{width:44px;height:44px;font-size:16px}}
+  </style>
+</head>
+<body>
+  <div class="card" role="main">
+    <header>
+      <div class="logo">PI</div>
+      <div>
+        <h1>PDF to Images</h1>
+        <p class="lead">Convert each page of a PDF into images directly in your browser.</p>
+      </div>
+    </header>
+
+    <div class="drop" id="drop">
+      <div class="left">
+        <div>
+          <strong class="hint">Drop PDF here</strong>
+          <div class="hint">or click to select one file</div>
+        </div>
+      </div>
+      <div>
+        <label class="btn" for="fileInput">Choose PDF</label>
+        <input id="fileInput" type="file" accept="application/pdf" />
+      </div>
+    </div>
+
+    <ul class="file-list" id="fileList" aria-live="polite"></ul>
+
+    <div class="actions">
+      <button id="convertBtn" class="btn" disabled>Convert to Images</button>
+      <button id="clearBtn" class="btn" style="background:transparent;color:var(--white);box-shadow:none;">Clear</button>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="progress" aria-hidden="true"><i id="progBar"></i></div>
+    </div>
+
+    <div id="output" style="margin-top:16px"></div>
+
+    <footer>
+      <div>All processing happens in your browser.</div>
+      <div>Theme • dark green</div>
+    </footer>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const drop = document.getElementById('drop');
+    const fileListEl = document.getElementById('fileList');
+    const convertBtn = document.getElementById('convertBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const progBar = document.getElementById('progBar');
+    const output = document.getElementById('output');
+
+    let pdfFile = null;
+
+    function refreshList(){
+      fileListEl.innerHTML = '';
+      if(pdfFile){
+        const li = document.createElement('li');
+        li.innerHTML = `<div><div class="fname">${escapeHtml(pdfFile.name)}</div><div class="fsize">${(pdfFile.size/1024).toFixed(1)} KB</div></div>`;
+        fileListEl.appendChild(li);
+      }
+      convertBtn.disabled = !pdfFile;
+    }
+
+    function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    fileInput.addEventListener('change', e=>{
+      pdfFile = e.target.files[0];
+      refreshList();
+    });
+
+    ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.style.borderColor='rgba(255,255,255,0.18)'; }));
+    ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.style.borderColor='rgba(255,255,255,0.08)'; }));
+
+    drop.addEventListener('drop', e=>{
+      const dropped = e.dataTransfer.files[0];
+      if(dropped && dropped.type==='application/pdf'){
+        pdfFile = dropped;
+        refreshList();
+      }
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      pdfFile = null;
+      refreshList();
+      output.innerHTML='';
+      progBar.style.width='0%';
+    });
+
+    convertBtn.addEventListener('click', async ()=>{
+      if(!pdfFile) return;
+      convertBtn.disabled = true; clearBtn.disabled = true; progBar.style.width='4%';
+      output.innerHTML = '';
+      try{
+        const arr = await readFileAsArrayBuffer(pdfFile);
+        const pdf = await pdfjsLib.getDocument({data: arr}).promise;
+        for(let i=1; i<=pdf.numPages; i++){
+          progBar.style.width = `${4 + Math.round((i/pdf.numPages)*80)}%`;
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({scale:1.5});
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({canvasContext: ctx, viewport}).promise;
+
+          const img = document.createElement('img');
+          img.src = canvas.toDataURL('image/png');
+
+          const downloadLink = document.createElement('a');
+          downloadLink.href = img.src;
+          downloadLink.download = `page-${i}.png`;
+          downloadLink.textContent = `Download Page ${i}`;
+          downloadLink.className = 'btn';
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'img-wrapper';
+          wrapper.appendChild(img);
+          wrapper.appendChild(downloadLink);
+
+          output.appendChild(wrapper);
+        }
+        progBar.style.width = '100%';
+      }catch(err){
+        alert('Error converting PDF: ' + err.message);
+      }finally{
+        convertBtn.disabled = false; clearBtn.disabled = false; setTimeout(()=>progBar.style.width='0%',400);
+      }
+    });
+
+    function readFileAsArrayBuffer(file){
+      return new Promise((res,rej)=>{
+        const r = new FileReader();
+        r.onload = ()=>res(r.result);
+        r.onerror = ()=>rej(r.error);
+        r.readAsArrayBuffer(file);
+      });
+    }
+
+    refreshList();
+  </script>
+</body>
+</html>
